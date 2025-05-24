@@ -1,0 +1,75 @@
+# Rust/Cargo
+/target/
+Cargo.lock
+
+# Debug symbols
+*.pdb
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Temporary folders
+tmp/
+temp/
+
+# Cache directories
+.cache/
+
+# Flamegraph profiling
+flamegraph.svg
+perf.data*
+
+# Rust-analyzer
+.rust-analyzer/
+
+# Local development
+/examples/target/
+/benches/target/
+
+# Test artifacts
+/test-results/
+
+# Documentation build
+/book/
