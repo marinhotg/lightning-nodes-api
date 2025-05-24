@@ -1,9 +1,10 @@
-mod routes;
+mod handlers;
+mod services;
 
-use routes::create_routes;
+use handlers::app;
 
 pub async fn run() {
-    let app = create_routes();
+    let app = app();
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
