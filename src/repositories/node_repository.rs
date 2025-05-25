@@ -1,6 +1,6 @@
-use crate::models::node::ApiNode;
+use crate::models::node::{ApiNode, NodeResponse};
 use chrono::{DateTime, Utc};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 
 pub async fn save_nodes(pool: &PgPool, nodes: Vec<ApiNode>) {
     let operation_start = Utc::now();
@@ -37,4 +37,32 @@ pub async fn save_nodes(pool: &PgPool, nodes: Vec<ApiNode>) {
         .unwrap();
 
     println!("Deleted {} outdated nodes", deleted.rows_affected());
+}
+
+pub async fn get_all_nodes(pool: &PgPool) -> Vec<NodeResponse> {
+    let rows = sqlx::query(
+        "SELECT public_key, alias, capacity_btc::FLOAT8 as capacity_btc_float, first_seen_formatted FROM nodes ORDER BY capacity_sats DESC"
+    )
+    .fetch_all(pool)
+    .await
+    .unwrap();
+
+    let mut nodes = Vec::new();
+    for row in rows {
+        let public_key: String = row.get("public_key");
+        let alias: String = row.get("alias");
+        let capacity_btc: f64 = row.get("capacity_btc_float");
+        let first_seen_formatted: DateTime<Utc> = row.get("first_seen_formatted");
+
+        nodes.push(NodeResponse {
+            public_key,
+            alias,
+            capacity: format!("{:.8}", capacity_btc),
+            first_seen: first_seen_formatted
+                .format("%Y-%m-%dT%H:%M:%SZ")
+                .to_string(),
+        });
+    }
+
+    nodes
 }
