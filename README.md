@@ -4,7 +4,7 @@ A Rust API server that fetches Lightning Network node data from mempool.space an
 
 ## Build tools & versions used
 
-- Rust 1.87.
+- Rust 1.87.0
 - Axum 0.8.4 (web framework)
 - SQLx 0.8.6 (database client)
 - PostgreSQL 15 (database)
@@ -36,26 +36,32 @@ git clone https://github.com/marinhotg/lightning-nodes-api
 cd lightning_nodes_api
 ```
 
-2. **Install Rust dependencies**:
+2. **Set database URL**:
+
+```bash
+export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/lightning_nodes"
+```
+
+3. **Install Rust dependencies**:
 
 ```bash
 cargo build
 ```
 
-3. **Start PostgreSQL database**:
+4. **Start PostgreSQL database**:
 
 ```bash
 chmod +x start_db.sh
 ./start_db.sh
 ```
 
-4. **Run database migrations**:
+5. **Run database migrations**:
 
 ```bash
 sqlx migrate run
 ```
 
-5. **Start the server**:
+6. **Start the server**:
 
 ```bash
 cargo run
@@ -66,11 +72,3 @@ The server will be available at `http://localhost:3000` with the following endpo
 - `GET /fetch` - Test API connection
 - `GET /save` - Import nodes from mempool.space to database
 - `GET /nodes` - Return formatted node data from database
-
-## Environment Variables
-
-Create a `.env` file in the project root with:
-
-```
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lightning_nodes
-```
