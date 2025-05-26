@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize)]
 pub struct ApiNode {
     #[serde(rename = "publicKey")]
     pub public_key: String,

@@ -1,8 +1,9 @@
 use crate::models::node::{ApiNode, NodeResponse};
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
+use axum::http::StatusCode;
 
-pub async fn save_nodes(pool: &PgPool, nodes: Vec<ApiNode>) {
+pub async fn save_nodes(pool: &PgPool, nodes: Vec<ApiNode>) -> Result<(), StatusCode> {
     let operation_start = Utc::now();
 
     println!("Starting sync operation at {}", operation_start);
@@ -27,25 +28,26 @@ pub async fn save_nodes(pool: &PgPool, nodes: Vec<ApiNode>) {
         .bind(first_seen_formatted)
         .execute(pool)
         .await
-        .unwrap();
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     }
 
     let deleted = sqlx::query("DELETE FROM nodes WHERE updated_at < $1")
         .bind(operation_start)
         .execute(pool)
         .await
-        .unwrap();
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     println!("Deleted {} outdated nodes", deleted.rows_affected());
+    Ok(())
 }
 
-pub async fn get_all_nodes(pool: &PgPool) -> Vec<NodeResponse> {
+pub async fn get_all_nodes(pool: &PgPool) -> Result<Vec<NodeResponse>, StatusCode> {
     let rows = sqlx::query(
         "SELECT public_key, alias, capacity_btc::FLOAT8 as capacity_btc_float, first_seen_formatted FROM nodes ORDER BY capacity_sats DESC"
     )
     .fetch_all(pool)
     .await
-    .unwrap();
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let mut nodes = Vec::new();
     for row in rows {
@@ -64,5 +66,5 @@ pub async fn get_all_nodes(pool: &PgPool) -> Vec<NodeResponse> {
         });
     }
 
-    nodes
+    Ok(nodes)
 }
