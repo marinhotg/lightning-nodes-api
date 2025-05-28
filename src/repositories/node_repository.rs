@@ -1,7 +1,7 @@
 use crate::models::node::{ApiNode, NodeResponse};
+use axum::http::StatusCode;
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
-use axum::http::StatusCode;
 
 pub async fn save_nodes(pool: &PgPool, nodes: Vec<ApiNode>) -> Result<(), StatusCode> {
     let operation_start = Utc::now();
@@ -15,10 +15,10 @@ pub async fn save_nodes(pool: &PgPool, nodes: Vec<ApiNode>) -> Result<(), Status
 
         sqlx::query(
             "INSERT INTO nodes (public_key, alias, capacity_sats, capacity_btc, first_seen_unix, first_seen_formatted, updated_at) 
-             VALUES ($1, $2, $3, $4, $5, $6, NOW())
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
              ON CONFLICT (public_key) DO UPDATE SET
              alias = $2, capacity_sats = $3, capacity_btc = $4, 
-             first_seen_unix = $5, first_seen_formatted = $6, updated_at = NOW()"
+             first_seen_unix = $5, first_seen_formatted = $6, updated_at = $7"
         )
         .bind(&node.public_key)
         .bind(&node.alias)
@@ -26,6 +26,7 @@ pub async fn save_nodes(pool: &PgPool, nodes: Vec<ApiNode>) -> Result<(), Status
         .bind(capacity_btc)
         .bind(node.first_seen)
         .bind(first_seen_formatted)
+        .bind(operation_start)
         .execute(pool)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -41,13 +42,25 @@ pub async fn save_nodes(pool: &PgPool, nodes: Vec<ApiNode>) -> Result<(), Status
     Ok(())
 }
 
-pub async fn get_all_nodes(pool: &PgPool) -> Result<Vec<NodeResponse>, StatusCode> {
-    let rows = sqlx::query(
+pub async fn get_all_nodes(
+    pool: &PgPool,
+    order: Option<String>,
+) -> Result<Vec<NodeResponse>, StatusCode> {
+    let rows = if order.as_deref() == Some("first_seen") {
+        sqlx::query(
+        "SELECT public_key, alias, capacity_btc::FLOAT8 as capacity_btc_float, first_seen_formatted FROM nodes ORDER BY first_seen_formatted DESC"
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    } else {
+        sqlx::query(
         "SELECT public_key, alias, capacity_btc::FLOAT8 as capacity_btc_float, first_seen_formatted FROM nodes ORDER BY capacity_sats DESC"
     )
     .fetch_all(pool)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    };
 
     let mut nodes = Vec::new();
     for row in rows {
